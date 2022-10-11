@@ -1,0 +1,1 @@
+python ./prepare_data/waymo2range.py --process 8
