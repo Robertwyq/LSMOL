@@ -1,16 +1,18 @@
 # <center>4D Unsupervised Object Discovery<center>
-> [NeurIPS 2022] [**4D Unsupervised Object Discovery**](https://arxiv.org/pdf/2210.04801.pdf).
+> [NeurIPS 2022 Spotlight] [**4D Unsupervised Object Discovery**](https://arxiv.org/pdf/2210.04801.pdf).
 > Yuqi Wang, Yuntao Chen, [Zhaoxiang Zhang](https://zhaoxiangzhang.net)
 
 
 ## News
+- **[2022/12/1]** https://zhuanlan.zhihu.com/p/588302740
 - **[2022/10/10]** Paper released on <https://arxiv.org/pdf/2210.04801.pdf>
 - **[2022/9/15]** 🔥*LSMOL* was accepted by NeurIPS 2022.
 
 
 ## Catalog
-**The code is not available now, we will release it soon**
-- [ ] Data Processing Code 
+**The code is not available now, we will release it soon🚀**
+- [] 3D Instance Initialization Code
+- [x] Data Processing Code 
 - [x] Initialization
 
 
@@ -42,6 +44,10 @@ conda activate lsmol
 cd tools
 # extract image,range_image,calibration
 python ./prepare_data/waymo2range.py --process 24
+# extract sceneflow and extra info
+python ./prepare_data/waymo2sceneflow.py --process 24
+# extract point cloud (remove ground)
+python ./prepare_data/waymo2point_noground --process 24
 ```
 
 
@@ -52,6 +58,8 @@ waymo_lsmol
 │   ├── image/
 │   ├── range/
 │   ├── proposal/
+│   ├── PC_ng/
+│   ├── sceneflow_extra/
 │   ├── calibration.txt 
 ```
 

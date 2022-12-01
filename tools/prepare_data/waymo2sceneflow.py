@@ -1,43 +1,17 @@
 import os
-import math
+import tensorflow.compat.v1 as tf
 import numpy as np
-from PIL import Image
 import argparse
 import multiprocessing
-import tensorflow.compat.v1 as tf
 
+tf.enable_eager_execution()
 from waymo_open_dataset.utils import  frame_utils
 from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset import dataset_pb2
-tf.enable_eager_execution()
 
 def read_root(root): 
     file_list = sorted(os.listdir(root))
     return file_list
-
-def save_top_range(range_images, camera_projections,name):
-    main_range = range_images[1][0]
-    main_range_tensor = tf.reshape(tf.convert_to_tensor(value=main_range.data), main_range.shape.dims)
-    main_camera  = camera_projections[1][0]
-    main_camera_tensor = tf.reshape(tf.convert_to_tensor(value=main_camera.data), main_camera.shape.dims)
-    np.savez(name,range_image = main_range_tensor.numpy()[:,:,0], camera_projections = main_camera_tensor.numpy())
-
-def save_calibration(inc,path):
-    H = 2650
-    W = 64
-    start = 180
-    end = -180
-    with open(path,"w") as f:
-        f.write(str(H))
-        f.write(';')
-        f.write(str(W))
-        f.write(';')
-        f.write(str(start))
-        f.write(';')
-        f.write(str(end))
-        for i in inc:
-            f.write(';')
-            f.write(str(math.degrees(i)))
 
 def extract_flow(frame): 
     range_images_flow = {}
@@ -59,9 +33,8 @@ def extract_flow_on_camera(range_images_flow,camera_projections):
     main_camera_tensor = tf.reshape(tf.convert_to_tensor(value=main_camera.data), main_camera.shape.dims)
     return main_range_tensor.numpy(),main_camera_tensor.numpy()
 
-def main(waymo_root,split,output_dir,token, process_num, debug):
+def main(waymo_root,split,output_dir, token, process_num, debug):
     train_root = os.path.join(waymo_root,split)
-
     file_list = read_root(train_root)
     if debug:
         file_list = file_list[0:5]
@@ -71,41 +44,37 @@ def main(waymo_root,split,output_dir,token, process_num, debug):
             continue
         filename = file_list[s]
         FILENAME = os.path.join(train_root,filename)
-        segment_dir = os.path.join(output_dir,filename.split('.')[0])
-        os.makedirs(output_dir,exist_ok=True)
-        segment_img_dir = os.path.join(segment_dir,'image')
-        os.makedirs(segment_img_dir,exist_ok=True)
-        segmenr_range_dir = os.path.join(segment_dir,'range')
-        os.makedirs(segmenr_range_dir,exist_ok=True)
-
+        sceneflow_dir = os.path.join(output_dir,filename.split('.')[0],'sceneflow_extra')
+        os.makedirs(sceneflow_dir,exist_ok=True)
         dataset = tf.data.TFRecordDataset(FILENAME, compression_type='')
         frame_list = ["%06d" % (x) for x in range(199)]
-        # jpg,png (img format)
-        new_imgs = ['frame_'+t+'.jpg' for t in frame_list]
+        new_imgs = ['frame_'+t+'.npy' for t in frame_list]
         i = 0
         for data in dataset:
             frame = open_dataset.Frame()
             frame.ParseFromString(bytearray(data.numpy()))
 
-            # only extract front-view img 
-            for index, image in enumerate(frame.images):
-                img = tf.image.decode_jpeg(image.image)
-                img = np.array(img)
-                I = Image.fromarray(np.uint8(img))
-                save_path = os.path.join(segment_img_dir,new_imgs[i])
-                I.save(save_path)
-                break
-
-            # extract range
             range_images, camera_projections,range_image_top_pose = frame_utils.parse_range_image_and_camera_projection(frame)
-            name = os.path.join(segmenr_range_dir,new_imgs[i].split('.')[0])
-            save_top_range(range_images,camera_projections,name)
-
-            # extract calibration
-            inc = frame.context.laser_calibrations[-1].beam_inclinations
-            path_name = os.path.join(segment_dir,'calibration.txt')
-            save_calibration(inc,path_name)
-            
+            main_range = range_images[1][0]
+            main_range_tensor = tf.reshape(tf.convert_to_tensor(value=main_range.data), main_range.shape.dims)
+            main_range_array = main_range_tensor.numpy()
+            # sceneflow
+            range_images_flow = extract_flow(frame)
+            flow_array, camera_array = extract_flow_on_camera(range_images_flow,camera_projections)
+            front_mask = np.where((camera_array[:,:,0]==1)|(camera_array[:,:,3]==1),1,0)
+            flow_mask = np.where((flow_array[:,:,3]>-1)&((np.abs(flow_array[:,:,0])>0) |(np.abs(flow_array[:,:,1])>0)  | (np.abs(flow_array[:,:,2])>0) ),1,0)
+            point=[]
+            instance_prop = np.where((front_mask[:,:]==1)&(flow_mask[:,:]==1),1,0)
+            cam = camera_array[instance_prop==1]
+            flo = flow_array[instance_prop==1]
+            dep = main_range_array[instance_prop==1]
+            for p in range(cam.shape[0]):
+                if cam[p][0]==1:
+                    point.append([cam[p][1],cam[p][2],flo[p][0],flo[p][1],flo[p][2],dep[p][0],dep[p][1]])
+                elif cam[p][3]==1:
+                    point.append([cam[p][4],cam[p][5],flo[p][0],flo[p][1],flo[p][2],dep[p][0],dep[p][1]])
+            flow_name = os.path.join(sceneflow_dir,new_imgs[i])
+            np.save(flow_name,np.array(point))
             # stop 
             i = i+1
             if i>198:
@@ -120,8 +89,6 @@ if __name__ == "__main__":
     parser.add_argument('--process', type=int, default=1, help = 'num workers to use')
     parser.add_argument('--debug',type=bool,default=False)
     args = parser.parse_args()
-
-    os.makedirs(args.output_dir,exist_ok=True)
 
     if args.process>1:
         pool = multiprocessing.Pool(args.process)

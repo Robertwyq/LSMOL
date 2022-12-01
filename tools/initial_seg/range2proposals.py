@@ -44,7 +44,7 @@ def main(root):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root',default='/data/yuqi_wang/waymo_range_val')
+    parser.add_argument('--root',default='/data1/yuqi_wang/waymo_lsmol',help='path for the data processed')
     parser.add_argument('--process', type=int, default=1, help = 'num workers to use')
     args = parser.parse_args()
     main(args.root)
