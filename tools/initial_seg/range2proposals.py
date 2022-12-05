@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../third_party/depth_clustering/lib')
+sys.path.append('../../third_party/depth_cluster/lib')
 import segment
 from PIL import Image
 import numpy as np
