@@ -11,7 +11,7 @@
 
 ## Catalog
 **The code is not available now, we will release it soon🚀**
-- [] 3D Instance Initialization Code
+- [ ] 3D Instance Initialization Code
 - [x] Data Processing Code 
 - [x] Initialization
 
@@ -36,13 +36,29 @@ Object discovery is a core task in computer vision. While fast progresses have b
 ```
 conda create -n lsmol python=3.7 -y
 conda activate lsmol
+
+# waymo v1.2 
+pip install waymo-open-dataset-tf-2-4-0==1.4.1 
+# NSFP
+
+# Depth Cluster
+sudo apt-get install libeigen3-dev
+sudo apt-get install libgtest-dev
+sudo apt-get install libboost-all-dev
+sudo apt-get install python-numpy
+
+mkdir build
+cd build
+cmake ..
+make -j4
 ```
+
 
 
 ### Data Preparation
 ```
 cd tools
-# extract image,range_image,calibration
+# extract image,range_image,calibration (about 2 hours)
 python ./prepare_data/waymo2range.py --process 24
 # extract sceneflow and extra info
 python ./prepare_data/waymo2sceneflow.py --process 24
