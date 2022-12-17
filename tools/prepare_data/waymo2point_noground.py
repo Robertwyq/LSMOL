@@ -103,9 +103,16 @@ def main(waymo_root,split,output_dir,token, process_num, debug):
 
             point_xyz=points_all[:,:3]
 
+            # get global coordinates
             global_pc1 = transform_global(point_xyz,frame)
             name = os.path.join(segmenr_pc_dir,new_file[i])
-            np.savez(name,global_pc1=global_pc1,cp_point = cp_points_all,point = points_all)
+
+            # filter front camera image
+            front_mask = np.where((cp_points_all[:,0]==1)|(cp_points_all[:,3]==1),1,0)
+            global_pc1 = global_pc1[front_mask==1]
+            points_all = points_all[front_mask==1]
+            cp_points_1 = cp_points_all[front_mask==1]
+            np.savez(name,global_pc1=global_pc1,cp_point =cp_points_1, point = points_all)
 
             i = i+1
             if i>198:
@@ -120,7 +127,7 @@ if __name__ == "__main__":
     parser.add_argument('--split',default='train',choices=['train','valid'])
     parser.add_argument('--output_dir',default='/data1/yuqi_wang/waymo_lsmol',help='path to save the data')
     parser.add_argument('--process', type=int, default=1, help = 'num workers to use')
-    parser.add_argument('--debug',type=bool,default=False)
+    parser.add_argument('--debug',type=bool,default=False,help='test 5 segments for debug')
     args = parser.parse_args()
 
     if args.process>1:

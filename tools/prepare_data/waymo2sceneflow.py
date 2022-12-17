@@ -8,6 +8,7 @@ tf.enable_eager_execution()
 from waymo_open_dataset.utils import  frame_utils
 from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset import dataset_pb2
+from waymo2point_noground import filter_pc
 
 def read_root(root): 
     file_list = sorted(os.listdir(root))
@@ -68,11 +69,13 @@ def main(waymo_root,split,output_dir, token, process_num, debug):
             cam = camera_array[instance_prop==1]
             flo = flow_array[instance_prop==1]
             dep = main_range_array[instance_prop==1]
+            _,points_all = filter_pc(frame,instance_prop,range_images,camera_projections,range_image_top_pose,range_images_flow)
+
             for p in range(cam.shape[0]):
                 if cam[p][0]==1:
-                    point.append([cam[p][1],cam[p][2],flo[p][0],flo[p][1],flo[p][2],dep[p][0],dep[p][1]])
+                    point.append([cam[p][1],cam[p][2],flo[p][0],flo[p][1],flo[p][2],dep[p][0],points_all[p][0],points_all[p][1],points_all[p][2]])
                 elif cam[p][3]==1:
-                    point.append([cam[p][4],cam[p][5],flo[p][0],flo[p][1],flo[p][2],dep[p][0],dep[p][1]])
+                    point.append([cam[p][4],cam[p][5],flo[p][0],flo[p][1],flo[p][2],dep[p][0],points_all[p][0],points_all[p][1],points_all[p][2]])
             flow_name = os.path.join(sceneflow_dir,new_imgs[i])
             np.save(flow_name,np.array(point))
             # stop 
