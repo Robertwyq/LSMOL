@@ -1,0 +1,10 @@
+_BASE_: "./Base-RCNN-FPN_waymo_lsmol.yaml"
+MODEL:
+  # WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  WEIGHTS: ""
+  MASK_ON: False
+  RESNETS:
+    DEPTH: 50
+  PIXEL_STD: [57.375, 57.120, 58.395]
+  BACKBONE:
+    FREEZE_AT: 0

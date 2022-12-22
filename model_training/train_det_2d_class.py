@@ -92,22 +92,20 @@ def setup(args):
     Create configs and perform basic setups.
     """
     BaseFolder='/data/yuqi_wang/waymo'
-    # TrainFolder = '/data/yuqi_wang/waymo_range'
-    # TrainFolder = '/data/yuqi_wang/waymo/train_visible'
-    TrainFolder = '/data/yuqi_wang/waymo/train_visible_few'
+    TrainFolder = '/data/yuqi_wang/waymo_range'
     ValFolder = '/data/yuqi_wang/waymo/new_val'
-    FULL_LABEL_CLASSES = ['unknown', 'object']
+    FULL_LABEL_CLASSES = ['unknown', 'vehicle', 'pedestrian', 'cyclist']
     
     for d in ['train']:
-        DatasetCatalog.register('waymo_'+d,lambda d=d: load_coco_json(os.path.join(BaseFolder,'pseudo_anno',d+'_vis_few_annotations.json'),TrainFolder))
+        DatasetCatalog.register('waymo_'+d,lambda d=d: load_coco_json(os.path.join(BaseFolder,'pseudo_anno',d+'_annotations_sf_3class.json'),TrainFolder))
         MetadataCatalog.get('waymo_'+d).set(thing_classes=FULL_LABEL_CLASSES)
 
     for d in ['val']:
-        DatasetCatalog.register('waymo_'+d,lambda d=d: load_coco_json(os.path.join(BaseFolder,'pseudo_anno',d+'_annotations.json'),ValFolder))
+        DatasetCatalog.register('waymo_'+d,lambda d=d: load_coco_json(os.path.join(BaseFolder,'pseudo_anno',d+'_annotations_class.json'),ValFolder))
         MetadataCatalog.get('waymo_'+d).set(thing_classes=FULL_LABEL_CLASSES)
 
     cfg = get_cfg()
-    cfg.OUTPUT_DIR='../log_gt_mini'
+    cfg.OUTPUT_DIR='../log_sf_class'
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = len(FULL_LABEL_CLASSES)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)

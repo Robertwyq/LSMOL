@@ -11,6 +11,8 @@
 
 ## Catalog
 **The code is not available now, we will release it soon🚀**
+- [] 3D Instance Segmentation
+- [x] 2D Detection
 - [x] NSPF for sceneflow estimation
 - [x] 3D Instance Initialization Code
 - [x] Data Processing Code 
@@ -77,12 +79,14 @@ pip install git+https://github.com/openai/CLIP.git
 # HDBSCAN 
 pip install hdbscan
 
+# 3D Tracker
+git clone https://github.com/ImmortalTracker/ImmortalTracker 
+
 # Detectron2
 cd third_party
 git clone https://github.com/facebookresearch/detectron2.git
 python -m pip install -e detectron2
 ```
-
 
 
 ### Data Preparation
@@ -113,6 +117,16 @@ waymo_lsmol
 │   ├── calibration.txt 
 ```
 
+## Citation
+Please consider citing our work as follows if it is helpful.
+```
+@article{wang20224d,
+  title={4D Unsupervised Object Discovery},
+  author={Wang, Yuqi and Chen, Yuntao and Zhang, Zhaoxiang},
+  journal={arXiv preprint arXiv:2210.04801},
+  year={2022}
+}
+```
 
 ## Acknowledgement 
 Many thanks to the following open-source projects:
