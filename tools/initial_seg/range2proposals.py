@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../../third_party/depth_clustering/lib')
+sys.path.append('../../third_party/depth_clustering/lib') # path for depth_clustering
 import segment
 from PIL import Image
 import numpy as np
@@ -31,13 +31,13 @@ def main(root):
         imgs = sorted(os.listdir(img_path))
         ranges = sorted(os.listdir(range_path))
 
-        for idx in range(len(imgs)):
-            data,img_np,cp,img_new = read_data(calib_path,range_path,img_path,imgs,ranges,idx)
+        for idx in range(len(ranges)):
+            data,img_np, cp, img_new = read_data(calib_path,range_path,img_path,imgs,ranges,idx)
             # generate proposal
             seg = segment.Segment(data)
             seg.extract_ground_and_instance(img_np)
             instance = seg.get_instances()
-            name = imgs[idx].split('.')[0]+'.npy'
+            name = ranges[idx].split('.')[0]+'.npy'
             pp_name = os.path.join(output_path,name)
             np.save(pp_name,instance)
         print('finish:',seg_file)

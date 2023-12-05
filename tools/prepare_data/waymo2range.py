@@ -59,7 +59,7 @@ def extract_flow_on_camera(range_images_flow,camera_projections):
     main_camera_tensor = tf.reshape(tf.convert_to_tensor(value=main_camera.data), main_camera.shape.dims)
     return main_range_tensor.numpy(),main_camera_tensor.numpy()
 
-def main(waymo_root,split,output_dir,token, process_num, debug):
+def main(waymo_root,split,output_dir,token, process_num, debug, only_front):
     train_root = os.path.join(waymo_root,split)
 
     file_list = read_root(train_root)
@@ -88,13 +88,23 @@ def main(waymo_root,split,output_dir,token, process_num, debug):
             frame.ParseFromString(bytearray(data.numpy()))
 
             # only extract front-view img 
-            for index, image in enumerate(frame.images):
-                img = tf.image.decode_jpeg(image.image)
-                img = np.array(img)
-                I = Image.fromarray(np.uint8(img))
-                save_path = os.path.join(segment_img_dir,new_imgs[i])
-                I.save(save_path)
-                break
+            if only_front:
+                for index, image in enumerate(frame.images):
+                    img = tf.image.decode_jpeg(image.image)
+                    img = np.array(img)
+                    I = Image.fromarray(np.uint8(img))
+                    save_path = os.path.join(segment_img_dir,new_imgs[i])
+                    I.save(save_path)
+                    break
+            # extract all-view img
+            else:
+                for index, image in enumerate(frame.images):
+                    img = tf.image.decode_jpeg(image.image)
+                    img = np.array(img)
+                    I = Image.fromarray(np.uint8(img))
+                    frame_path = new_imgs[i].split('.')[0]+'_camera'+str(index)+'.jpg'
+                    save_path = os.path.join(segment_img_dir,frame_path)
+                    I.save(save_path)
 
             # extract range
             range_images, camera_projections,range_image_top_pose = frame_utils.parse_range_image_and_camera_projection(frame)
@@ -118,7 +128,8 @@ if __name__ == "__main__":
     parser.add_argument('--split',default='train',choices=['train','valid'])
     parser.add_argument('--output_dir',default='/data1/yuqi_wang/waymo_lsmol',help='path to save the data')
     parser.add_argument('--process', type=int, default=1, help = 'num workers to use')
-    parser.add_argument('--debug',type=bool,default=False)
+    parser.add_argument('--debug', type=bool, default=False, help = 'only test for 5 segments')
+    parser.add_argument('--only_front', default=False, action="store_true", help = 'only use front camera')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir,exist_ok=True)
@@ -126,8 +137,8 @@ if __name__ == "__main__":
     if args.process>1:
         pool = multiprocessing.Pool(args.process)
         for token in range(args.process):
-            result = pool.apply_async(main, args=(args.waymo_root,args.split,args.output_dir, token, args.process,args.debug))
+            result = pool.apply_async(main, args=(args.waymo_root,args.split,args.output_dir, token, args.process,args.debug, args.only_front))
         pool.close()
         pool.join()
     else:
-        main(args.waymo_root,args.split,args.output_dir, 0, args.process, args.debug)
+        main(args.waymo_root,args.split,args.output_dir, 0, args.process, args.debug, args.only_front)

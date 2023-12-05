@@ -62,6 +62,7 @@ def main(waymo_root,split,output_dir, token, process_num, debug):
             # sceneflow
             range_images_flow = extract_flow(frame)
             flow_array, camera_array = extract_flow_on_camera(range_images_flow,camera_projections)
+            # only front-view img (camera index = 1)
             front_mask = np.where((camera_array[:,:,0]==1)|(camera_array[:,:,3]==1),1,0)
             flow_mask = np.where((flow_array[:,:,3]>-1)&((np.abs(flow_array[:,:,0])>0) |(np.abs(flow_array[:,:,1])>0)  | (np.abs(flow_array[:,:,2])>0) ),1,0)
             point=[]
